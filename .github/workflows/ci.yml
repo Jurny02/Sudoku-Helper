@@ -1,0 +1,50 @@
+# Builds the app and runs the unit tests on every push and pull request.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch cancels the run that's still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The app targets iOS 26.2, so it needs Xcode 26.2 or newer.
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show Xcode and simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | grep -E "iPhone|-- iOS"
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project SudokuHelper.xcodeproj \
+            -scheme SudokuHelper \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
+            -only-testing:SudokuHelperTests \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult

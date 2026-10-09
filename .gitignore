@@ -7,3 +7,4 @@ DerivedData/
 build/
 *.xcscmblueprint
 *.xccheckout
+TestResults.xcresult/
