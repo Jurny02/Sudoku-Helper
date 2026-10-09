@@ -136,6 +136,74 @@ struct SudokuBoard: Codable, Equatable {
         return fitsNowhereElse(rowSquares) || fitsNowhereElse(columnSquares) || fitsNowhereElse(boxSquares)
     }
 
+    /// Counts the ways the board can be completed, stopping once `limit` is reached.
+    /// A proper puzzle has exactly one; `solutionCount(limit: 2)` tells 0, 1 and "more than one" apart.
+    func solutionCount(limit: Int = 2) -> Int {
+        // Bit n set = number n is already used in that row, column or box.
+        var rows = [Int](repeating: 0, count: Self.size)
+        var columns = [Int](repeating: 0, count: Self.size)
+        var boxes = [Int](repeating: 0, count: Self.size)
+        var empty: [Int] = []
+
+        for index in values.indices {
+            let value = values[index]
+            let row = index / Self.size, column = index % Self.size, box = row / 3 * 3 + column / 3
+            if value == 0 {
+                empty.append(index)
+                continue
+            }
+            let bit = 1 << value
+            // Two equal numbers in a unit: no solution at all.
+            if rows[row] & bit != 0 || columns[column] & bit != 0 || boxes[box] & bit != 0 { return 0 }
+            rows[row] |= bit
+            columns[column] |= bit
+            boxes[box] |= bit
+        }
+
+        var found = 0
+
+        func search() {
+            guard found < limit else { return }
+            // Fill the square with the fewest options first, which keeps the search small.
+            var best = -1, bestOptions = 0, bestCount = 10
+            for (position, index) in empty.enumerated() where index >= 0 {
+                let row = index / Self.size, column = index % Self.size, box = row / 3 * 3 + column / 3
+                let options = ~(rows[row] | columns[column] | boxes[box]) & 0b11_1111_1110
+                let count = options.nonzeroBitCount
+                if count < bestCount {
+                    best = position
+                    bestOptions = options
+                    bestCount = count
+                    if count <= 1 { break }
+                }
+            }
+            guard best >= 0 else {
+                found += 1
+                return
+            }
+            guard bestCount > 0 else { return }
+
+            let index = empty[best]
+            let row = index / Self.size, column = index % Self.size, box = row / 3 * 3 + column / 3
+            empty[best] = -1
+            for number in 1...9 where bestOptions & (1 << number) != 0 {
+                let bit = 1 << number
+                rows[row] |= bit
+                columns[column] |= bit
+                boxes[box] |= bit
+                search()
+                rows[row] &= ~bit
+                columns[column] &= ~bit
+                boxes[box] &= ~bit
+                if found >= limit { break }
+            }
+            empty[best] = index
+        }
+
+        search()
+        return found
+    }
+
     /// Whether the number in this square also appears in its row, column or box.
     func hasConflict(row: Int, column: Int) -> Bool {
         let value = self[row, column]

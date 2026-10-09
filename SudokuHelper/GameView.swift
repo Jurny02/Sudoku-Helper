@@ -23,6 +23,8 @@ struct GameView: View {
     @State private var isConfirmingClear = false
     @State private var isSolved = false
     @State private var showsSuccess = false
+    /// Set when Start finds the typed-in puzzle has no solution or more than one.
+    @State private var puzzleProblem: PuzzleProblem?
     /// False for the example game, so playing it never touches the player's saved game.
     private let savesProgress: Bool
     @Environment(\.scenePhase) private var scenePhase
@@ -87,6 +89,21 @@ struct GameView: View {
                 }
             }
         }
+        .alert(
+            puzzleProblem?.title ?? "",
+            isPresented: Binding(get: { puzzleProblem != nil }, set: { if !$0 { puzzleProblem = nil } }),
+            presenting: puzzleProblem
+        ) { problem in
+            switch problem {
+            case .noSolution:
+                Button("Keep Editing", role: .cancel) {}
+            case .severalSolutions:
+                Button("Keep Editing", role: .cancel) {}
+                Button("Start Anyway") { startGame() }
+            }
+        } message: { problem in
+            Text(problem.message)
+        }
         .overlay {
             if showsSuccess {
                 SuccessView(
@@ -126,7 +143,7 @@ struct GameView: View {
 
         if mode == .setup {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Start") { startGame() }
+                Button("Start") { startTapped() }
                     .fontWeight(.semibold)
                     .disabled(board.isEmpty || !board.conflictingPositions().isEmpty)
             }
@@ -191,6 +208,15 @@ struct GameView: View {
         board = previous
     }
 
+    /// Starts the game if the puzzle has exactly one solution; otherwise explains what's wrong first.
+    private func startTapped() {
+        switch board.solutionCount(limit: 2) {
+        case 0: puzzleProblem = .noSolution
+        case 1: startGame()
+        default: puzzleProblem = .severalSolutions
+        }
+    }
+
     /// Locks the typed-in numbers as the puzzle's starting numbers and begins playing.
     private func startGame() {
         board.lockNumbersAsGivens()
@@ -217,6 +243,27 @@ struct GameView: View {
     private func autosave() {
         guard mode == .play, savesProgress, !isSolved else { return }
         GameStorage.save(board)
+    }
+}
+
+private enum PuzzleProblem {
+    case noSolution
+    case severalSolutions
+
+    var title: String {
+        switch self {
+        case .noSolution: "This Puzzle Can't Be Solved"
+        case .severalSolutions: "This Puzzle Has More Than One Solution"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .noSolution:
+            "Some of the numbers you typed in can't all be right at once. Check them against your puzzle."
+        case .severalSolutions:
+            "A number may be missing. You can still play it, but the hints may not lead to one answer."
+        }
     }
 }
 
