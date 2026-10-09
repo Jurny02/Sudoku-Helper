@@ -33,8 +33,6 @@ struct SolverDemoView: View {
                     )
                     .frame(maxWidth: .infinity)
                     .allowsHitTesting(false)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .glassCard(cornerRadius: 18, padding: 8)
 
                     NumberStrip(current: state.currentNumber, completed: state.board.completedNumbers)
 
@@ -58,7 +56,6 @@ struct SolverDemoView: View {
             .background { CalmBackdrop() }
             .navigationTitle("Watch It Solve")
             .navigationBarTitleDisplayMode(.inline)
-            .animation(.easeInOut(duration: 0.15), value: state.board)
         }
     }
 
@@ -173,8 +170,6 @@ private struct NumberStrip: View {
                     )
             }
         }
-        .animation(.easeInOut(duration: 0.1), value: current)
-        .animation(.easeInOut(duration: 0.2), value: completed)
         .accessibilityElement()
         .accessibilityLabel(current.map { "Checking \($0)" } ?? "Not running")
     }

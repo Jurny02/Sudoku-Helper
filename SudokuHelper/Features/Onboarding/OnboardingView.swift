@@ -41,6 +41,8 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
                     .glassEffect(.regular.tint(.accentColor).interactive(), in: .rect(cornerRadius: 16))
+                    // The whole button is tappable, not just the label inside it.
+                    .contentShape(.rect(cornerRadius: 16))
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

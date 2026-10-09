@@ -75,6 +75,8 @@ struct GlassOutlineButtonStyle: ButtonStyle {
                 .overlay {
                     Capsule().strokeBorder(Color.primary.opacity(isLight ? 0.16 : 0.15), lineWidth: 1)
                 }
+                // The whole capsule is tappable, not just the label inside it.
+                .contentShape(Capsule())
                 .opacity(isEnabled ? 1 : 0.6)
                 .scaleEffect(configuration.isPressed ? 0.98 : 1)
                 .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
