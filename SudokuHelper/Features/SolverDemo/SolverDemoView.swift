@@ -12,41 +12,54 @@ struct SolverDemoView: View {
     private var state: SolverDemoFeature.State { store.state }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                SudokuBoardView(
-                    board: state.board,
-                    selection: .constant(nil),
-                    highlightedNumber: state.currentNumber,
-                    onSquareTapped: { _ in }
-                )
-                .allowsHitTesting(false)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .glassCard(cornerRadius: 18, padding: 8)
+        GeometryReader { geometry in
+            let boardSide = min(
+                geometry.size.width - 32,
+                geometry.size.height * 0.58,
+                620
+            )
 
-                NumberStrip(current: state.currentNumber, completed: state.board.completedNumbers)
+            ScrollView {
+                VStack(spacing: 20) {
+                    SudokuBoardView(
+                        board: state.board,
+                        selection: .constant(nil),
+                        highlightedNumber: state.currentNumber,
+                        onSquareTapped: { _ in }
+                    )
+                    .frame(
+                        maxWidth: max(200, boardSide),
+                        maxHeight: max(200, boardSide)
+                    )
+                    .frame(maxWidth: .infinity)
+                    .allowsHitTesting(false)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .glassCard(cornerRadius: 18, padding: 8)
 
-                Text(state.status)
-                    .font(.subheadline)
-                    .foregroundStyle(state.outcome == .stuck ? Color.orange : Color.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(minHeight: 40)
+                    NumberStrip(current: state.currentNumber, completed: state.board.completedNumbers)
+
+                    Text(state.status)
+                        .font(.subheadline)
+                        .foregroundStyle(state.outcome == .stuck ? Color.orange : Color.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(minHeight: 40)
                     // Text changes every step; cross-fading it is unreadable at high speed.
-                    .transaction { $0.animation = nil }
+                        .transaction { $0.animation = nil }
 
-                stats
-                    .transaction { $0.animation = nil }
+                    stats
+                        .transaction { $0.animation = nil }
 
-                speedSlider
+                    speedSlider
 
-                controls
+                    controls
+                }
+                .padding()
             }
-            .padding()
+            .background { CalmBackdrop() }
+            .navigationTitle("Watch It Solve")
+            .navigationBarTitleDisplayMode(.inline)
+            .animation(.easeInOut(duration: 0.15), value: state.board)
         }
-        .background { CalmBackdrop() }
-        .navigationTitle("Watch It Solve")
-        .navigationBarTitleDisplayMode(.inline)
-        .animation(.easeInOut(duration: 0.15), value: state.board)
     }
 
     private var stats: some View {

@@ -114,6 +114,7 @@ struct GlassKeyStyle: ButtonStyle {
                     }
                 }
                 .opacity(isEnabled || isPicked ? 1 : 0.7)
+                .contentShape(Capsule())
         }
     }
 }

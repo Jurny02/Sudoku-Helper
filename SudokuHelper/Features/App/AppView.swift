@@ -103,6 +103,7 @@ struct AppView: View {
             Label(title, systemImage: systemImage)
                 .font(.headline)
                 .frame(maxWidth: .infinity, minHeight: 50)
+                .contentShape(Capsule())
         }
         return Group {
             if prominent {

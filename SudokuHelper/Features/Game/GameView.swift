@@ -19,8 +19,6 @@ struct GameView: View {
                 highlightedNumber: state.highlightedNumber,
                 onSquareTapped: { store.send(.squareTapped($0)) }
             )
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .glassCard(cornerRadius: 18, padding: 8)
 
             NumberPadView(
                 isEnabled: state.isPadEnabled,

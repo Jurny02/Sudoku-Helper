@@ -41,6 +41,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
                     .glassEffect(.regular.tint(.accentColor).interactive(), in: .rect(cornerRadius: 16))
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .padding(.top, 20)
