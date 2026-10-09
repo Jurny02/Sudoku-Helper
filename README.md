@@ -58,7 +58,8 @@ SudokuHelper/
 ├── Features/
 │   ├── App/        Main menu and navigation
 │   ├── Game/       Board, number pad, undo, start check, success screen
-│   └── Onboarding/ The How to Play introduction
+│   ├── Onboarding/ The How to Play introduction
+│   └── SolverDemo/ Watch It Solve
 ├── UI/             Board and number pad views shared by the features
 └── AppDependencies.swift, SudokuHelperApp.swift (composition root)
 ```
