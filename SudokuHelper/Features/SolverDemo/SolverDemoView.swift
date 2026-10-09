@@ -22,15 +22,18 @@ struct SolverDemoView: View {
                 )
                 .allowsHitTesting(false)
 
-                NumberStrip(current: state.currentNumber)
+                NumberStrip(current: state.currentNumber, completed: state.board.completedNumbers)
 
                 Text(state.status)
                     .font(.subheadline)
                     .foregroundStyle(state.outcome == .stuck ? Color.orange : Color.secondary)
                     .multilineTextAlignment(.center)
                     .frame(minHeight: 40)
+                    // Text changes every step; cross-fading it is unreadable at high speed.
+                    .transaction { $0.animation = nil }
 
                 stats
+                    .transaction { $0.animation = nil }
 
                 speedSlider
 
@@ -133,21 +136,26 @@ struct SolverDemoView: View {
     }
 }
 
-/// The numbers 1–9 in a row, with the one being checked filled in.
+/// The numbers 1–9 in a row: the one being checked is filled in blue, and numbers already on the board
+/// nine times are grey because the solver skips them.
 private struct NumberStrip: View {
     let current: Int?
+    let completed: Set<Int>
 
     var body: some View {
         HStack(spacing: 6) {
             ForEach(1...9, id: \.self) { number in
+                let isCurrent = number == current
+                let isCompleted = completed.contains(number)
                 Text("\(number)")
                     .font(.headline)
-                    .foregroundStyle(number == current ? Color.white : Color.accentColor)
+                    .foregroundStyle(isCurrent ? Color.white : isCompleted ? Color(.secondaryLabel) : Color.accentColor)
                     .frame(maxWidth: .infinity, minHeight: 34)
-                    .background(number == current ? Color.accentColor : Color(.systemGray6), in: Circle())
+                    .background(isCurrent ? Color.accentColor : isCompleted ? Color(.systemGray4) : Color(.systemGray6), in: Circle())
             }
         }
         .animation(.easeInOut(duration: 0.1), value: current)
+        .animation(.easeInOut(duration: 0.2), value: completed)
         .accessibilityElement()
         .accessibilityLabel(current.map { "Checking \($0)" } ?? "Not running")
     }

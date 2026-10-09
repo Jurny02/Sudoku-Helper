@@ -6,8 +6,9 @@
 import Foundation
 
 /// Solves a puzzle the way a player would with number mode, one check at a time:
-/// pick a number, and if it has a yellow ("must go here") square, fill the top-most one and start again at 1.
-/// Otherwise try the next number. After three rounds of 1–9 without filling anything, it gives up.
+/// pick a number, and if it has a yellow ("must go here") square, fill the top-most one. Either way, move on
+/// to the next number, going round 1–9 and skipping numbers that are already on the board nine times.
+/// After three rounds without filling anything, it gives up.
 enum SimpleSolver {
     /// How many full rounds of 1–9 may pass without a fill before the solver gives up.
     static let maxEmptyRounds = 3
@@ -17,6 +18,8 @@ enum SimpleSolver {
         var number = 1
         /// Rounds of 1–9 in a row that filled nothing.
         var emptyRounds = 0
+        /// Whether the current round has filled a square yet.
+        var filledThisRound = false
         /// Numbers checked so far.
         var steps = 0
         /// Squares filled so far.
@@ -48,26 +51,46 @@ enum SimpleSolver {
         return nil
     }
 
-    /// Checks the next number and fills one square if it can.
+    /// Checks the next number and fills one square if it can, then moves on to the number after it.
     static func step(_ board: inout SudokuBoard, _ progress: inout Progress) -> Step {
+        skipCompletedNumbers(on: board, &progress)
         let number = progress.number
         progress.steps += 1
 
+        let result: Step
         if let position = forcedSquare(for: number, on: board) {
             board.setValue(number, row: position.row, column: position.column)
             progress.filled += 1
-            progress.number = 1
+            progress.filledThisRound = true
             progress.emptyRounds = 0
-            return .placed(number, at: position)
+            result = .placed(number, at: position)
+        } else {
+            result = .nothingFor(number)
         }
 
-        if number == 9 {
-            progress.number = 1
-            progress.emptyRounds += 1
-        } else {
-            progress.number = number + 1
+        advance(&progress)
+        skipCompletedNumbers(on: board, &progress)
+        return result
+    }
+
+    /// Moves to the next number, counting a round that filled nothing when it wraps from 9 back to 1.
+    private static func advance(_ progress: inout Progress) {
+        guard progress.number == 9 else {
+            progress.number += 1
+            return
         }
-        return .nothingFor(number)
+        progress.number = 1
+        if !progress.filledThisRound { progress.emptyRounds += 1 }
+        progress.filledThisRound = false
+    }
+
+    /// Numbers already on the board nine times have nowhere left to go, so they aren't checked.
+    static func skipCompletedNumbers(on board: SudokuBoard, _ progress: inout Progress) {
+        let completed = board.completedNumbers
+        guard completed.count < 9 else { return }
+        while completed.contains(progress.number) {
+            advance(&progress)
+        }
     }
 
     static func outcome(of board: SudokuBoard, _ progress: Progress) -> Outcome {
@@ -80,6 +103,7 @@ enum SimpleSolver {
     static func run(_ board: SudokuBoard) -> (board: SudokuBoard, progress: Progress, outcome: Outcome) {
         var board = board
         var progress = Progress()
+        skipCompletedNumbers(on: board, &progress)
         while outcome(of: board, progress) == .running {
             _ = step(&board, &progress)
         }
