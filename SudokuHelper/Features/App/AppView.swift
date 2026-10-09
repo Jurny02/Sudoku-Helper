@@ -54,8 +54,13 @@ struct AppView: View {
                 }
                 .buttonStyle(.bordered)
 
-                Button("How to Play", systemImage: "questionmark.circle") {
-                    store.send(.howToPlayTapped)
+                HStack(spacing: 24) {
+                    Button("How to Play", systemImage: "questionmark.circle") {
+                        store.send(.howToPlayTapped)
+                    }
+                    Button("Watch It Solve", systemImage: "play.circle") {
+                        store.send(.watchItSolveTapped)
+                    }
                 }
                 .padding(.top, 8)
 
@@ -67,8 +72,13 @@ struct AppView: View {
                 OnboardingScreen { store.send(.onboarding($0)) }
             }
             .navigationDestination(for: AppFeature.Route.self) { route in
-                GameScreen(route: route, gameRepository: dependencies.gameRepository) { delegate in
-                    store.send(.game(id: route.id, delegate))
+                switch route.destination {
+                case let .game(game):
+                    GameScreen(game: game, gameRepository: dependencies.gameRepository) { delegate in
+                        store.send(.game(id: route.id, delegate))
+                    }
+                case .solverDemo:
+                    SolverDemoScreen(time: dependencies.time)
                 }
             }
         }
@@ -79,9 +89,9 @@ struct AppView: View {
 private struct GameScreen: View {
     @State private var store: Store<GameFeature.State, GameFeature.Action>
 
-    init(route: AppFeature.Route, gameRepository: GameRepository, onDelegate: @escaping (GameFeature.Action.Delegate) -> Void) {
+    init(game: GameFeature.State, gameRepository: GameRepository, onDelegate: @escaping (GameFeature.Action.Delegate) -> Void) {
         _store = State(initialValue: Store(
-            initialState: route.game,
+            initialState: game,
             reducer: GameFeature(gameRepository: gameRepository),
             onAction: { action in
                 if case let .delegate(delegate) = action { onDelegate(delegate) }
@@ -91,6 +101,19 @@ private struct GameScreen: View {
 
     var body: some View {
         GameView(store: store)
+    }
+}
+
+/// Owns the store for the solver demo while it's on screen.
+private struct SolverDemoScreen: View {
+    @State private var store: Store<SolverDemoFeature.State, SolverDemoFeature.Action>
+
+    init(time: TimeSource) {
+        _store = State(initialValue: Store(initialState: SolverDemoFeature.State(), reducer: SolverDemoFeature(time: time)))
+    }
+
+    var body: some View {
+        SolverDemoView(store: store)
     }
 }
 

@@ -7,10 +7,15 @@ import Foundation
 
 /// The root of the app: the main menu, the stack of game screens on top of it, and the onboarding.
 struct AppFeature: Reducer {
-    /// A game screen pushed on top of the menu. Each push gets its own id, so two games are never confused.
+    /// A screen pushed on top of the menu. Each push gets its own id, so two screens are never confused.
     struct Route: Hashable, Identifiable {
         let id: Int
-        let game: GameFeature.State
+        let destination: Destination
+
+        enum Destination: Equatable {
+            case game(GameFeature.State)
+            case solverDemo
+        }
 
         static func == (lhs: Route, rhs: Route) -> Bool { lhs.id == rhs.id }
         func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -30,6 +35,7 @@ struct AppFeature: Reducer {
         case newGameTapped
         case exampleGameTapped
         case howToPlayTapped
+        case watchItSolveTapped
         /// SwiftUI changed the navigation path, e.g. the back button was tapped.
         case pathChanged([Route])
         case game(id: Route.ID, GameFeature.Action.Delegate)
@@ -54,20 +60,24 @@ struct AppFeature: Reducer {
                 state.hasSavedGame = false
                 return .none
             }
-            push(GameFeature.State(board: board, mode: .play), on: &state)
+            push(.game(GameFeature.State(board: board, mode: .play)), on: &state)
             return .none
 
         case .newGameTapped:
-            push(GameFeature.State(board: SudokuBoard(), mode: .setup), on: &state)
+            push(.game(GameFeature.State(board: SudokuBoard(), mode: .setup)), on: &state)
             return .none
 
         case .exampleGameTapped:
             // The example is never saved, so it can't replace the player's own game.
-            push(GameFeature.State(board: .sample, mode: .play, savesProgress: false), on: &state)
+            push(.game(GameFeature.State(board: .sample, mode: .play, savesProgress: false)), on: &state)
             return .none
 
         case .howToPlayTapped:
             state.isShowingOnboarding = true
+            return .none
+
+        case .watchItSolveTapped:
+            push(.solverDemo, on: &state)
             return .none
 
         case let .pathChanged(path):
@@ -89,8 +99,8 @@ struct AppFeature: Reducer {
         }
     }
 
-    private func push(_ game: GameFeature.State, on state: inout State) {
-        state.path.append(Route(id: state.nextRouteID, game: game))
+    private func push(_ destination: Route.Destination, on state: inout State) {
+        state.path.append(Route(id: state.nextRouteID, destination: destination))
         state.nextRouteID += 1
     }
 

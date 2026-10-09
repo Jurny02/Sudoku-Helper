@@ -10,13 +10,19 @@ import Foundation
 struct AppDependencies {
     let gameRepository: GameRepository
     let settings: AppSettings
+    let time: TimeSource
 
     static let live = AppDependencies(
         gameRepository: UserDefaultsGameRepository(),
-        settings: UserDefaultsAppSettings()
+        settings: UserDefaultsAppSettings(),
+        time: .live
     )
 
     static var preview: AppDependencies {
-        AppDependencies(gameRepository: InMemoryGameRepository(), settings: InMemoryAppSettings(hasSeenOnboarding: true))
+        AppDependencies(
+            gameRepository: InMemoryGameRepository(),
+            settings: InMemoryAppSettings(hasSeenOnboarding: true),
+            time: .live
+        )
     }
 }

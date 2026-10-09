@@ -21,6 +21,7 @@ Type in the puzzle, and the app shows which numbers can still go in each square 
 - **Undo** any change, one step at a time.
 - **Autosave** after every move. Continue picks up where you left off.
 - **Example game** to try the app without typing in a puzzle.
+- **Watch It Solve** shows the yellow-square method solving the example step by step: Play and Pause, a speed slider, a timer, and an Instant run that shows how long the whole solve takes. If the method gets stuck (three rounds of 1–9 without placing anything), it says so.
 - **How to Play** introduction on first launch, available again from the menu.
 - Light and dark mode.
 
@@ -66,9 +67,9 @@ SudokuHelper/
 
 `SudokuHelperTests` mirrors the app's layers:
 
-- **Domain:** board rules, the solver, and the number-mode hints
+- **Domain:** board rules, the solvers, and the number-mode hints
 - **Data:** saving and loading with UserDefaults
-- **Features:** the app, game and onboarding reducers, tested by sending actions and checking the resulting state and effects
+- **Features:** the app, game, onboarding and solver demo reducers, tested by sending actions and checking the resulting state and effects
 
 ## Continuous integration
 

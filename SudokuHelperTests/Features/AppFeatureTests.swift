@@ -37,19 +37,19 @@ struct AppFeatureTests {
         #expect(state.hasSavedGame)
 
         await feature.send(.continueTapped, to: &state)
-        #expect(state.path.map(\.game) == [GameFeature.State(board: saved, mode: .play)])
+        #expect(state.path.map(\.destination) == [.game(GameFeature.State(board: saved, mode: .play))])
     }
 
     @Test func exampleGameOpensWithoutSaving() async {
         var state = AppFeature.State()
         await feature.send(.exampleGameTapped, to: &state)
-        #expect(state.path.map(\.game) == [GameFeature.State(board: .sample, mode: .play, savesProgress: false)])
+        #expect(state.path.map(\.destination) == [.game(GameFeature.State(board: .sample, mode: .play, savesProgress: false))])
     }
 
     @Test func newGameOpensAnEmptyBoardForTypingIn() async {
         var state = AppFeature.State()
         await feature.send(.newGameTapped, to: &state)
-        #expect(state.path.map(\.game) == [GameFeature.State(board: SudokuBoard(), mode: .setup)])
+        #expect(state.path.map(\.destination) == [.game(GameFeature.State(board: SudokuBoard(), mode: .setup))])
     }
 
     @Test func goingBackToTheMenuChecksForASavedGameAgain() async {
