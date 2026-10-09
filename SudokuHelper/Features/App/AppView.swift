@@ -51,12 +51,14 @@ struct AppView: View {
 
             GlassEffectContainer(spacing: 16) {
                 VStack(spacing: 14) {
-                    menuButton("Continue", systemImage: "play.fill", prominent: true) {
+                    // The tinted button is the one most likely wanted: Continue when there's a saved game,
+                    // otherwise New Game.
+                    menuButton("Continue", systemImage: "play.fill", prominent: store.state.hasSavedGame) {
                         store.send(.continueTapped)
                     }
                     .disabled(!store.state.hasSavedGame)
 
-                    menuButton("New Game", systemImage: "square.and.pencil") {
+                    menuButton("New Game", systemImage: "square.and.pencil", prominent: !store.state.hasSavedGame) {
                         store.send(.newGameTapped)
                     }
 
@@ -80,7 +82,7 @@ struct AppView: View {
                                 .frame(maxWidth: .infinity, minHeight: 44)
                         }
                     }
-                    .buttonStyle(.glass)
+                    .buttonStyle(MenuGlassButtonStyle())
                 }
             }
 
@@ -106,7 +108,7 @@ struct AppView: View {
             if prominent {
                 button.buttonStyle(.glassProminent)
             } else {
-                button.buttonStyle(.glass)
+                button.buttonStyle(MenuGlassButtonStyle())
             }
         }
     }
@@ -172,6 +174,38 @@ private struct OnboardingScreen: View {
         ),
         dependencies: dependencies
     )
+}
+
+/// Clear Liquid Glass with a faint grey tint and a thin outline in light mode, so the buttons stand out
+/// from the pale backdrop. In dark mode the glass is left untinted and only the outline is added.
+private struct MenuGlassButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        StyledLabel(configuration: configuration)
+    }
+
+    private struct StyledLabel: View {
+        let configuration: Configuration
+        @Environment(\.colorScheme) private var colorScheme
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            let isLight = colorScheme == .light
+            configuration.label
+                .foregroundStyle(isEnabled ? Color.primary : Color.secondary)
+                // Matches the height the system's prominent glass button gives the same label.
+                .padding(.vertical, 6)
+                .glassEffect(
+                    .regular.tint(isLight ? Color.black.opacity(0.07) : nil).interactive(isEnabled),
+                    in: .capsule
+                )
+                .overlay {
+                    Capsule().strokeBorder(Color.primary.opacity(isLight ? 0.16 : 0.15), lineWidth: 1)
+                }
+                .opacity(isEnabled ? 1 : 0.6)
+                .scaleEffect(configuration.isPressed ? 0.98 : 1)
+                .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+        }
+    }
 }
 
 /// Soft blurred shapes in the app's colours (blue, mint and the hint yellow) behind the menu's glass.
