@@ -22,35 +22,31 @@ struct NumberPadView: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(1...9, id: \.self) { number in
-                let button = Button {
-                    onNumber(number)
-                } label: {
-                    Text("\(number)")
-                        .font(.title2.weight(.semibold))
+        GlassEffectContainer(spacing: 8) {
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(1...9, id: \.self) { number in
+                    Button {
+                        onNumber(number)
+                    } label: {
+                        Text("\(number)")
+                            .font(.title2.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 48)
+                    }
+                    .buttonStyle(GlassKeyStyle(isPicked: highlightedNumber == number))
+                    .disabled(!allowedNumbers.contains(number))
+                }
+
+                Button(action: onErase) {
+                    Image(systemName: "delete.left")
+                        .font(.title3)
                         .frame(maxWidth: .infinity, minHeight: 48)
                 }
-                .disabled(!allowedNumbers.contains(number))
-
-                if highlightedNumber == number {
-                    button.buttonStyle(.borderedProminent)
-                } else {
-                    button.buttonStyle(.bordered)
-                }
+                .buttonStyle(GlassKeyStyle(tint: .red))
+                .disabled(!canErase)
+                .accessibilityLabel("Erase")
             }
-
-            Button(action: onErase) {
-                Image(systemName: "delete.left")
-                    .font(.title3)
-                    .frame(maxWidth: .infinity, minHeight: 48)
-            }
-            .buttonStyle(.bordered)
-            .tint(.red)
-            .disabled(!canErase)
-            .accessibilityLabel("Erase")
+            .disabled(!isEnabled)
         }
-        .disabled(!isEnabled)
     }
 }
 

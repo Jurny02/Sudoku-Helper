@@ -19,6 +19,8 @@ struct GameView: View {
                 highlightedNumber: state.highlightedNumber,
                 onSquareTapped: { store.send(.squareTapped($0)) }
             )
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .glassCard(cornerRadius: 18, padding: 8)
 
             NumberPadView(
                 isEnabled: state.isPadEnabled,
@@ -44,6 +46,7 @@ struct GameView: View {
                 .contentShape(Rectangle())
                 .onTapGesture { store.send(.backgroundTapped) }
         }
+        .background { CalmBackdrop() }
         // No title, to keep the top bar light; the hint text says which mode you're in.
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }

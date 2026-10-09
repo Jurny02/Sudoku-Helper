@@ -21,6 +21,8 @@ struct SolverDemoView: View {
                     onSquareTapped: { _ in }
                 )
                 .allowsHitTesting(false)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .glassCard(cornerRadius: 18, padding: 8)
 
                 NumberStrip(current: state.currentNumber, completed: state.board.completedNumbers)
 
@@ -41,6 +43,7 @@ struct SolverDemoView: View {
             }
             .padding()
         }
+        .background { CalmBackdrop() }
         .navigationTitle("Watch It Solve")
         .navigationBarTitleDisplayMode(.inline)
         .animation(.easeInOut(duration: 0.15), value: state.board)
@@ -62,8 +65,8 @@ struct SolverDemoView: View {
             Divider().frame(height: 32)
             stat(title: "Checks") { Text("\(state.progress.steps)") }
         }
-        .padding(.vertical, 8)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, 10)
+        .glassCard(cornerRadius: 16)
     }
 
     private func stat<Value: View>(title: String, @ViewBuilder value: () -> Value) -> some View {
@@ -100,7 +103,7 @@ struct SolverDemoView: View {
                 Label("Reset", systemImage: "arrow.counterclockwise")
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(GlassOutlineButtonStyle())
             .disabled(!state.isRunning && state.progress.steps == 0 && state.instantDuration == nil)
 
             Button {
@@ -109,7 +112,7 @@ struct SolverDemoView: View {
                 Label(state.isRunning ? "Pause" : "Play", systemImage: state.isRunning ? "pause.fill" : "play.fill")
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.glassProminent)
             .disabled(state.isFinished)
 
             Button {
@@ -118,7 +121,7 @@ struct SolverDemoView: View {
                 Label("Instant", systemImage: "bolt.fill")
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(GlassOutlineButtonStyle())
             .disabled(state.isRunning)
         }
         .labelStyle(.titleAndIcon)
@@ -151,7 +154,10 @@ private struct NumberStrip: View {
                     .font(.headline)
                     .foregroundStyle(isCurrent ? Color.white : isCompleted ? Color(.secondaryLabel) : Color.accentColor)
                     .frame(maxWidth: .infinity, minHeight: 34)
-                    .background(isCurrent ? Color.accentColor : isCompleted ? Color(.systemGray4) : Color(.systemGray6), in: Circle())
+                    .glassEffect(
+                        isCurrent ? .regular.tint(.accentColor) : isCompleted ? .regular.tint(Color.gray.opacity(0.5)) : .regular,
+                        in: .circle
+                    )
             }
         }
         .animation(.easeInOut(duration: 0.1), value: current)

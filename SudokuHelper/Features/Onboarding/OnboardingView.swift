@@ -24,7 +24,7 @@ struct OnboardingView: View {
 
             footer
         }
-        .background(Color(.systemBackground))
+        .background { CalmBackdrop() }
     }
 
     /// Page dots, Next and Skip intro, pinned to the bottom with the same 24pt margins as the content.
@@ -40,7 +40,7 @@ struct OnboardingView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 16))
+                    .glassEffect(.regular.tint(.accentColor).interactive(), in: .rect(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .padding(.top, 20)
@@ -241,7 +241,7 @@ struct ExampleBoard: View {
             .font(.system(size: 22, weight: .medium))
             .foregroundStyle(isPicked ? Color.white : (isAllowed ? Color.accentColor : Color(.tertiaryLabel)))
             .frame(width: size, height: size)
-            .background(isPicked ? Color.accentColor : Color(.systemGray6), in: Circle())
+            .glassEffect(isPicked ? .regular.tint(.accentColor) : .regular, in: .circle)
     }
 
     /// Erase isn't used in these examples, so it's drawn dimmed.
@@ -250,7 +250,7 @@ struct ExampleBoard: View {
             .font(.system(size: 20))
             .foregroundStyle(Color(.secondaryLabel).opacity(0.5))
             .frame(width: size, height: size)
-            .background(Color(.systemGray6), in: Circle())
+            .glassEffect(.regular, in: .circle)
     }
 
     private var selection: SudokuPosition? {

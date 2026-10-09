@@ -35,18 +35,18 @@ struct SuccessView: View {
                             .font(.headline)
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.glassProminent)
 
                     Button(action: onViewBoard) {
                         Text("View Board")
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(GlassOutlineButtonStyle())
                 }
                 .padding(.top, 8)
             }
             .padding(24)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28))
+            .glassEffect(.regular, in: .rect(cornerRadius: 28))
             .padding(32)
         }
     }
