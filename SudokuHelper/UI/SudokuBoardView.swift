@@ -136,7 +136,7 @@ struct SudokuBoardView: View {
     private func background(for position: SudokuPosition, value: Int) -> Color {
         guard let selection else {
             if let highlightedNumber {
-                return placementColor(for: highlightedNumber, at: position, value: value)
+                return placementColor(for: highlightedNumber, at: position)
             }
             return .clear
         }
@@ -153,19 +153,14 @@ struct SudokuBoardView: View {
         return .clear
     }
 
-    /// Squares already holding the number are blue, empty squares where it must go (it's the only
-    /// number that fits there, or the only place for it in its row, column or box) are yellow, other empty squares where it fits are green,
-    /// and squares holding a different number or where it would clash are grey.
-    private func placementColor(for number: Int, at position: SudokuPosition, value: Int) -> Color {
-        if value == number {
-            return style.existingColor
+    /// The style's colour for what the square means for the picked number (see `PlacementHint`).
+    private func placementColor(for number: Int, at position: SudokuPosition) -> Color {
+        switch PlacementHint.hint(for: number, at: position, on: board) {
+        case .existing: style.existingColor
+        case .forced: style.forcedColor
+        case .possible: style.possibleColor
+        case .blocked: style.blockedColor
         }
-        guard value == 0 else { return style.blockedColor }
-        let candidates = board.candidates(row: position.row, column: position.column)
-        if candidates == [number] || board.isOnlyPlace(for: number, row: position.row, column: position.column) {
-            return style.forcedColor
-        }
-        return candidates.contains(number) ? style.possibleColor : style.blockedColor
     }
 }
 
@@ -196,21 +191,6 @@ private struct GridLines: View {
         }
         .frame(width: total, height: total, alignment: .topLeading)
     }
-}
-
-extension SudokuBoard {
-    /// The example puzzle offered from the main menu, also used in previews.
-    static let sample = SudokuBoard(string: """
-        .95..4...
-        .....73.9
-        .6..21..8
-        136......
-        ..2.6.1..
-        ......673
-        9..15..2.
-        6.78.....
-        ...2..98.
-        """)!
 }
 
 #Preview {

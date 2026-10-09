@@ -7,58 +7,14 @@ import SwiftUI
 
 /// A swipeable introduction to the app. Shown on first launch and from "How to Play" in the menu.
 struct OnboardingView: View {
-    var onFinish: () -> Void
+    let store: Store<OnboardingFeature.State, OnboardingFeature.Action>
 
-    @State private var page = 0
-
-    private struct Page {
-        let title: String
-        let text: String
-        var symbol: String? = nil
-        /// A small copy of the game screen shown under the text.
-        var example: ExampleBoard.Example? = nil
-        /// Shows the guide to the number-mode colours under the text.
-        var showsColorGuide = false
-    }
-
-    private let pages: [Page] = [
-        Page(
-            title: "Welcome to Sudoku Helper",
-            text: "Type in any Sudoku puzzle and the app shows you where each number can still go.",
-            symbol: "square.grid.3x3.fill"
-        ),
-        Page(
-            title: "Enter Your Puzzle",
-            text: "Tap New Game and type in the puzzle's starting numbers. Tap Start and they're locked, so you can't change them by accident.",
-            symbol: "square.and.pencil"
-        ),
-        Page(
-            title: "Fill In a Square",
-            text: "Tap a square to select it. Only the numbers that fit its row, column and box stay active on the pad.",
-            example: .square(SudokuPosition(row: 4, column: 3))
-        ),
-        Page(
-            title: "Find Where a Number Goes",
-            text: "With no square selected, tap a number. The board shows where it can go, then tap a square to place it.",
-            example: .number(2)
-        ),
-        Page(
-            title: "What the Colours Mean",
-            text: "After you pick a number, every square gets a colour.",
-            showsColorGuide: true
-        ),
-        Page(
-            title: "Undo and Autosave",
-            text: "Made a mistake? Tap undo to take back your last change. Your game is saved after every move, so tap Continue to pick up where you left off.",
-            symbol: "arrow.uturn.backward.circle.fill"
-        ),
-    ]
-
-    private var isLastPage: Bool { page == pages.count - 1 }
+    private var pages: [OnboardingPage] { OnboardingPage.all }
+    private var isLastPage: Bool { store.state.isLastPage }
 
     var body: some View {
         VStack(spacing: 0) {
-            TabView(selection: $page) {
+            TabView(selection: store.binding(\.page, send: OnboardingFeature.Action.pageChanged)) {
                 ForEach(pages.indices, id: \.self) { index in
                     pageView(pages[index])
                         .tag(index)
@@ -74,14 +30,10 @@ struct OnboardingView: View {
     /// Page dots, Next and Skip intro, pinned to the bottom with the same 24pt margins as the content.
     private var footer: some View {
         VStack(spacing: 0) {
-            PageIndicator(count: pages.count, current: page)
+            PageIndicator(count: pages.count, current: store.state.page)
 
             Button {
-                if isLastPage {
-                    onFinish()
-                } else {
-                    withAnimation { page += 1 }
-                }
+                store.send(.nextTapped, animation: .default)
             } label: {
                 Text(isLastPage ? "Get Started" : "Next")
                     .font(.system(size: 17, weight: .semibold))
@@ -94,7 +46,7 @@ struct OnboardingView: View {
             .padding(.top, 20)
 
             // Hidden on the last page, but keeps its space so the layout doesn't jump.
-            Button("Skip intro", action: onFinish)
+            Button("Skip intro") { store.send(.skipTapped) }
                 .font(.system(size: 15))
                 .foregroundStyle(Color(.secondaryLabel))
                 .padding(.top, 12)
@@ -107,7 +59,7 @@ struct OnboardingView: View {
 
     /// The header sits 24pt below the safe area; the picture, demo or colour guide is centred
     /// in the space left between the header and the footer.
-    private func pageView(_ page: Page) -> some View {
+    private func pageView(_ page: OnboardingPage) -> some View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
                 Text(page.title)
@@ -204,7 +156,7 @@ private struct ColorGuide: View {
 /// A non-interactive copy of the board and number pad showing one of the two modes on the example puzzle.
 /// It uses the full width it's given and only shrinks the board when there isn't enough height.
 struct ExampleBoard: View {
-    enum Example {
+    enum Example: Equatable {
         /// A square is selected, so the pad only offers the numbers that fit it.
         case square(SudokuPosition)
         /// A number is picked, so the board shows where it can go.
@@ -298,5 +250,5 @@ struct ExampleBoard: View {
 }
 
 #Preview {
-    OnboardingView(onFinish: {})
+    OnboardingView(store: Store(initialState: OnboardingFeature.State(), reducer: OnboardingFeature()))
 }

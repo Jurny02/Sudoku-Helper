@@ -5,20 +5,9 @@
 
 import Foundation
 
-/// The row and column of one square, both 0...8.
-struct SudokuPosition: Hashable {
-    var row: Int
-    var column: Int
-
-    func sharesUnit(with other: SudokuPosition) -> Bool {
-        row == other.row
-            || column == other.column
-            || (row / 3 == other.row / 3 && column / 3 == other.column / 3)
-    }
-}
-
-/// A 9×9 Sudoku grid. Values are 1...9, and 0 means the square is empty.
-struct SudokuBoard: Codable, Equatable {
+/// A 9×9 Sudoku grid and its rules. Values are 1...9, and 0 means the square is empty.
+/// Solving lives in `SudokuSolver` and the number-mode hints in `PlacementHint`.
+struct SudokuBoard: Codable, Equatable, Sendable {
     static let size = 9
 
     private(set) var values: [Int]
@@ -114,94 +103,6 @@ struct SudokuBoard: Codable, Equatable {
             remaining.remove(self[peer.row, peer.column])
         }
         return remaining
-    }
-
-    /// Whether this empty square is the only place left for the number in its row, its column or its 3×3 box.
-    func isOnlyPlace(for number: Int, row: Int, column: Int) -> Bool {
-        guard candidates(row: row, column: column).contains(number) else { return false }
-
-        func fitsNowhereElse(_ squares: [(row: Int, column: Int)]) -> Bool {
-            !squares.contains { square in
-                (square.row != row || square.column != column)
-                    && candidates(row: square.row, column: square.column).contains(number)
-            }
-        }
-
-        let rowSquares = (0..<Self.size).map { (row: row, column: $0) }
-        let columnSquares = (0..<Self.size).map { (row: $0, column: column) }
-        let boxRow = row / 3 * 3
-        let boxColumn = column / 3 * 3
-        let boxSquares = (0..<Self.size).map { (row: boxRow + $0 / 3, column: boxColumn + $0 % 3) }
-
-        return fitsNowhereElse(rowSquares) || fitsNowhereElse(columnSquares) || fitsNowhereElse(boxSquares)
-    }
-
-    /// Counts the ways the board can be completed, stopping once `limit` is reached.
-    /// A proper puzzle has exactly one; `solutionCount(limit: 2)` tells 0, 1 and "more than one" apart.
-    func solutionCount(limit: Int = 2) -> Int {
-        // Bit n set = number n is already used in that row, column or box.
-        var rows = [Int](repeating: 0, count: Self.size)
-        var columns = [Int](repeating: 0, count: Self.size)
-        var boxes = [Int](repeating: 0, count: Self.size)
-        var empty: [Int] = []
-
-        for index in values.indices {
-            let value = values[index]
-            let row = index / Self.size, column = index % Self.size, box = row / 3 * 3 + column / 3
-            if value == 0 {
-                empty.append(index)
-                continue
-            }
-            let bit = 1 << value
-            // Two equal numbers in a unit: no solution at all.
-            if rows[row] & bit != 0 || columns[column] & bit != 0 || boxes[box] & bit != 0 { return 0 }
-            rows[row] |= bit
-            columns[column] |= bit
-            boxes[box] |= bit
-        }
-
-        var found = 0
-
-        func search() {
-            guard found < limit else { return }
-            // Fill the square with the fewest options first, which keeps the search small.
-            var best = -1, bestOptions = 0, bestCount = 10
-            for (position, index) in empty.enumerated() where index >= 0 {
-                let row = index / Self.size, column = index % Self.size, box = row / 3 * 3 + column / 3
-                let options = ~(rows[row] | columns[column] | boxes[box]) & 0b11_1111_1110
-                let count = options.nonzeroBitCount
-                if count < bestCount {
-                    best = position
-                    bestOptions = options
-                    bestCount = count
-                    if count <= 1 { break }
-                }
-            }
-            guard best >= 0 else {
-                found += 1
-                return
-            }
-            guard bestCount > 0 else { return }
-
-            let index = empty[best]
-            let row = index / Self.size, column = index % Self.size, box = row / 3 * 3 + column / 3
-            empty[best] = -1
-            for number in 1...9 where bestOptions & (1 << number) != 0 {
-                let bit = 1 << number
-                rows[row] |= bit
-                columns[column] |= bit
-                boxes[box] |= bit
-                search()
-                rows[row] &= ~bit
-                columns[column] &= ~bit
-                boxes[box] &= ~bit
-                if found >= limit { break }
-            }
-            empty[best] = index
-        }
-
-        search()
-        return found
     }
 
     /// Whether the number in this square also appears in its row, column or box.
