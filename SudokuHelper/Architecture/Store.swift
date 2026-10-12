@@ -8,6 +8,7 @@ import SwiftUI
 
 /// Holds a feature's state, runs its reducer for every action and starts the returned effects.
 /// Views read `state` and call `send`; SwiftUI redraws when the state they read changes.
+@MainActor
 @Observable
 final class Store<State, Action> {
     private(set) var state: State

@@ -66,7 +66,7 @@ struct OnboardingPage: Equatable {
         OnboardingPage(
             title: "Enter Your Puzzle",
             text: "Tap New Game and type in the puzzle's starting numbers. Tap Start and they're locked, so you can't change them by accident.",
-            symbol: "square.and.pencil"
+            example: .typingIn
         ),
         OnboardingPage(
             title: "Fill In a Square",

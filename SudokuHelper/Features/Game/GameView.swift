@@ -44,6 +44,7 @@ struct GameView: View {
                 .contentShape(Rectangle())
                 .onTapGesture { store.send(.backgroundTapped) }
         }
+        .background { CalmBackdrop() }
         // No title, to keep the top bar light; the hint text says which mode you're in.
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }

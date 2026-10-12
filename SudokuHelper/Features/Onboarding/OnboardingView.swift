@@ -24,7 +24,7 @@ struct OnboardingView: View {
 
             footer
         }
-        .background(Color(.systemBackground))
+        .background { CalmBackdrop() }
     }
 
     /// Page dots, Next and Skip intro, pinned to the bottom with the same 24pt margins as the content.
@@ -40,7 +40,10 @@ struct OnboardingView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 16))
+                    .glassEffect(.regular.tint(.accentColor).interactive(), in: .rect(cornerRadius: 16))
+                    // The whole button is tappable, not just the label inside it.
+                    .contentShape(.rect(cornerRadius: 16))
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .padding(.top, 20)
@@ -153,10 +156,12 @@ private struct ColorGuide: View {
     }
 }
 
-/// A non-interactive copy of the board and number pad showing one of the two modes on the example puzzle.
+/// A non-interactive copy of the board and number pad showing the example puzzle being typed in or played.
 /// It uses the full width it's given and only shrinks the board when there isn't enough height.
 struct ExampleBoard: View {
     enum Example: Equatable {
+        /// The puzzle is half typed in on New Game, with the next empty square selected.
+        case typingIn
         /// A square is selected, so the pad only offers the numbers that fit it.
         case square(SudokuPosition)
         /// A number is picked, so the board shows where it can go.
@@ -167,7 +172,20 @@ struct ExampleBoard: View {
     /// The space the demo has to fit in.
     let available: CGSize
 
-    private let board = SudokuBoard.sample
+    private var board: SudokuBoard {
+        example == .typingIn ? Self.halfTypedIn : .sample
+    }
+
+    /// The example's first three rows and the start of the fourth, as typed in on New Game (not locked yet).
+    private static let halfTypedIn: SudokuBoard = {
+        var board = SudokuBoard()
+        for row in 0..<4 {
+            for column in 0..<SudokuBoard.size where row < 3 || column < 3 {
+                board.setValue(SudokuBoard.sample[row, column], row: row, column: column)
+            }
+        }
+        return board
+    }()
     private static let boardToPad: CGFloat = 20
     private static let rowSpacing: CGFloat = 12
     private static let minColumnSpacing: CGFloat = 10
@@ -226,7 +244,7 @@ struct ExampleBoard: View {
             .font(.system(size: 22, weight: .medium))
             .foregroundStyle(isPicked ? Color.white : (isAllowed ? Color.accentColor : Color(.tertiaryLabel)))
             .frame(width: size, height: size)
-            .background(isPicked ? Color.accentColor : Color(.systemGray6), in: Circle())
+            .glassEffect(isPicked ? .regular.tint(.accentColor) : .regular, in: .circle)
     }
 
     /// Erase isn't used in these examples, so it's drawn dimmed.
@@ -235,12 +253,15 @@ struct ExampleBoard: View {
             .font(.system(size: 20))
             .foregroundStyle(Color(.secondaryLabel).opacity(0.5))
             .frame(width: size, height: size)
-            .background(Color(.systemGray6), in: Circle())
+            .glassEffect(.regular, in: .circle)
     }
 
     private var selection: SudokuPosition? {
-        if case .square(let position) = example { return position }
-        return nil
+        switch example {
+        case let .square(position): position
+        case .typingIn: SudokuPosition(row: 3, column: 3)
+        case .number: nil
+        }
     }
 
     private var highlightedNumber: Int? {
